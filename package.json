@@ -1,0 +1,31 @@
+{
+  "name": "last-artifact-action",
+  "private": true,
+  "version": "1.0.0",
+  "description": "GitHub Action to download and read the last artifact uploaded on some GitHub repository.",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "ncc build src/index.js -o dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/micalevisk/last-artifact-action.git"
+  },
+  "keywords": [
+    "github-action"
+  ],
+  "author": "Micael Levi <mykael2010@hotmail.com> (https://micalevisk.github.io)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/micalevisk/last-artifact-action/issues"
+  },
+  "homepage": "https://github.com/micalevisk/last-artifact-action#readme",
+  "dependencies": {
+    "@actions/core": "^1.2.3",
+    "@octokit/action": "^2.0.0",
+    "adm-zip": "^0.4.14"
+  },
+  "devDependencies": {
+    "@zeit/ncc": "^0.21.1"
+  }
+}
