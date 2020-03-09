@@ -1,0 +1,27 @@
+  name: "Last artifact"
+
+  description: "Get the content from a file of the last uploaded artifact on some GitHub repository."
+
+  branding:
+    icon: "box"
+    color: "package"
+
+  inputs:
+    filename:
+      description: "The entry name of the target file that the content will be read"
+      required: true
+    repository:
+      description: "The target GitHub owner and repository name"
+      default: ${{ github.repository }}
+      required: false
+
+  outputs:
+    content:
+      description: "The 'filename' file content if exists as string"
+    found:
+      description: "This value is 'false' by default. It will change to 'true' if the file was found"
+
+  runs:
+    using: "node12"
+    main: "dist/index.js"
+
