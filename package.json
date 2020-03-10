@@ -1,7 +1,7 @@
 {
   "name": "last-artifact-action",
   "private": true,
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "GitHub Action to download and read the last artifact uploaded on some GitHub repository.",
   "main": "dist/index.js",
   "scripts": {

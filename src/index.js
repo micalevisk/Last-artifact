@@ -1,32 +1,27 @@
 // @ts-check
 const core = require('@actions/core')
-const { Octokit } = require('@octokit/action')
 
 const API = require('./api')
-const github = new Octokit()
 
 const getInputs = () => ({
-  filename: core.getInput('filename', { required: true }),
   repository: core.getInput('repository', { required: true }),
 })
 
 const main = async () => {
-  core.setOutput('found', 'false')
+  core.setOutput('loaded', 'false')
 
-  const { filename, repository } = getInputs()
-  core.info(`Using>> filename: ${filename} | repo: ${repository}`)
+  const { repository } = getInputs()
+  core.info(`Using repo: ${repository}`)
 
-  const api = new API(github)
-
+  const api = new API()
   const artifactId = await api.getLastArtifactId(repository)
-  if (artifactId) {
-    const {content, found} = await api.getArtifactEntryContent(repository, artifactId, filename)
-    if (!found) return
-    const strContent = JSON.stringify(content)
+  if (artifactId !== null) {
+    const entries = await api.getArtifactEntryContent(repository, artifactId)
+    const strContent = JSON.stringify(entries)
     core.debug(`Setting output 'content' to the string '${strContent}'`)
     core.setOutput('content', strContent)
-    core.debug(`Setting output 'found' to the string 'true'`)
-    core.setOutput('found', 'true')
+    core.debug(`Setting output 'loaded' to the string 'true'`)
+    core.setOutput('loaded', 'true')
   }
 }
 
@@ -48,4 +43,3 @@ const handleError = (err) => {
 process.on('unhandledRejection', handleError)
 
 main().catch(handleError)
-

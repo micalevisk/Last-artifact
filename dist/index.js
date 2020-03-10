@@ -3457,34 +3457,36 @@ function register (state, name, method, options) {
 /***/ (function(module, __unusedexports, __webpack_require__) {
 
 // @ts-check
+const { Octokit } = __webpack_require__(725)
 const admZip = __webpack_require__(639)
 
 /**
  *
- * @param {string} entryName
  * @param {Buffer} buff
- * @returns {string|undefined}
+ * @returns {{[k:string]:string}}
  */
-const getZipBufferEntryContent = (entryName, buff) => {
+const mapEntries = (buff) => {
   const zip = new admZip(buff)
   const zipEntries = zip.getEntries()
-  for (const entry of zipEntries) {
-    if (entry.entryName === entryName) {
-      return zip.readAsText(entry)
+  return zipEntries.reduce((acum, entry) => {
+    if (entry.isDirectory) { // skip directories
+      return acum
     }
-  }
+    acum[ entry.entryName ] = zip.readAsText(entry)
+    return acum
+  }, {})
 }
 
 module.exports = class API {
 
-  constructor(github) {
-    this.github = github
+  constructor() {
+    this.github = new Octokit()
   }
 
   /**
    *
    * @param {string} repository The owner and the repo name separated by slash (`/`).
-   * @returns {number|null}
+   * @returns {Promise<number|null>}
    */
   getLastArtifactId(repository) {
     return this.github
@@ -3503,10 +3505,9 @@ module.exports = class API {
    *
    * @param {string} repository The owner and the repo name separated by slash (`/`).
    * @param {string|number} artifactId
-   * @param {string} entryName
-   * @returns {Promise<{content:string,found:boolean}>}
+   * @returns {Promise<{[k:string]:string}>}
    */
-  getArtifactEntryContent(repository, artifactId, entryName) {
+  getArtifactEntryContent(repository, artifactId) {
     return this.github
       // https://developer.github.com/v3/actions/artifacts/#download-an-artifact
       .request('GET /repos/:owner_slash_repo/actions/artifacts/:artifact_id/zip', {
@@ -3515,11 +3516,7 @@ module.exports = class API {
       })
       .then(res => res.data)
       .then(arrayBuffer => Buffer.from(arrayBuffer))
-      .then((buff) => {
-        const content = getZipBufferEntryContent(entryName, buff)
-        const found = (typeof content !== 'undefined')
-        return { content, found }
-      })
+      .then(mapEntries)
   }
 
 }
@@ -7919,33 +7916,28 @@ module.exports = require("util");
 
 // @ts-check
 const core = __webpack_require__(470)
-const { Octokit } = __webpack_require__(725)
 
 const API = __webpack_require__(378)
-const github = new Octokit()
 
 const getInputs = () => ({
-  filename: core.getInput('filename', { required: true }),
   repository: core.getInput('repository', { required: true }),
 })
 
 const main = async () => {
-  core.setOutput('found', 'false')
+  core.setOutput('loaded', 'false')
 
-  const { filename, repository } = getInputs()
-  core.info(`Using>> filename: ${filename} | repo: ${repository}`)
+  const { repository } = getInputs()
+  core.info(`Using repo: ${repository}`)
 
-  const api = new API(github)
-
+  const api = new API()
   const artifactId = await api.getLastArtifactId(repository)
-  if (artifactId) {
-    const {content, found} = await api.getArtifactEntryContent(repository, artifactId, filename)
-    if (!found) return
-    const strContent = JSON.stringify(content)
+  if (artifactId !== null) {
+    const entries = await api.getArtifactEntryContent(repository, artifactId)
+    const strContent = JSON.stringify(entries)
     core.debug(`Setting output 'content' to the string '${strContent}'`)
     core.setOutput('content', strContent)
-    core.debug(`Setting output 'found' to the string 'true'`)
-    core.setOutput('found', 'true')
+    core.debug(`Setting output 'loaded' to the string 'true'`)
+    core.setOutput('loaded', 'true')
   }
 }
 
@@ -7967,7 +7959,6 @@ const handleError = (err) => {
 process.on('unhandledRejection', handleError)
 
 main().catch(handleError)
-
 
 
 /***/ }),

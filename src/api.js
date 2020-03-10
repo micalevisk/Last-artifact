@@ -1,32 +1,34 @@
 // @ts-check
+const { Octokit } = require('@octokit/action')
 const admZip = require('adm-zip')
 
 /**
  *
- * @param {string} entryName
  * @param {Buffer} buff
- * @returns {string|undefined}
+ * @returns {{[k:string]:string}}
  */
-const getZipBufferEntryContent = (entryName, buff) => {
+const mapEntries = (buff) => {
   const zip = new admZip(buff)
   const zipEntries = zip.getEntries()
-  for (const entry of zipEntries) {
-    if (entry.entryName === entryName) {
-      return zip.readAsText(entry)
+  return zipEntries.reduce((acum, entry) => {
+    if (entry.isDirectory) { // skip directories
+      return acum
     }
-  }
+    acum[ entry.entryName ] = zip.readAsText(entry)
+    return acum
+  }, {})
 }
 
 module.exports = class API {
 
-  constructor(github) {
-    this.github = github
+  constructor() {
+    this.github = new Octokit()
   }
 
   /**
    *
    * @param {string} repository The owner and the repo name separated by slash (`/`).
-   * @returns {number|null}
+   * @returns {Promise<number|null>}
    */
   getLastArtifactId(repository) {
     return this.github
@@ -45,10 +47,9 @@ module.exports = class API {
    *
    * @param {string} repository The owner and the repo name separated by slash (`/`).
    * @param {string|number} artifactId
-   * @param {string} entryName
-   * @returns {Promise<{content:string,found:boolean}>}
+   * @returns {Promise<{[k:string]:string}>}
    */
-  getArtifactEntryContent(repository, artifactId, entryName) {
+  getArtifactEntryContent(repository, artifactId) {
     return this.github
       // https://developer.github.com/v3/actions/artifacts/#download-an-artifact
       .request('GET /repos/:owner_slash_repo/actions/artifacts/:artifact_id/zip', {
@@ -57,11 +58,7 @@ module.exports = class API {
       })
       .then(res => res.data)
       .then(arrayBuffer => Buffer.from(arrayBuffer))
-      .then((buff) => {
-        const content = getZipBufferEntryContent(entryName, buff)
-        const found = (typeof content !== 'undefined')
-        return { content, found }
-      })
+      .then(mapEntries)
   }
 
 }
