@@ -22,7 +22,7 @@
   "homepage": "https://github.com/micalevisk/last-artifact-action#readme",
   "dependencies": {
     "@actions/core": "^1.9.1",
-    "@octokit/action": "^2.0.0",
+    "@octokit/action": "^6.0.4",
     "adm-zip": "^0.4.14"
   },
   "devDependencies": {
