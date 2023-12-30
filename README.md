@@ -9,6 +9,9 @@ Get the content from a file of the last uploaded artifact on some GitHub reposit
 The target GitHub owner and repository name  
 default: `${{ github.repository }}`
 
+You should set `GITHUB_TOKEN` on either [`with:`](https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idstepswith) or [`env:`](https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#env) field (not both at same time) to prevent rate limiting.  
+If `repository` is another private repo, you must define a [PAT with repo scope](https://github.com/settings/tokens/new?scopes=repo) and put this token on your secrets to be used as `GITHUB_TOKEN` value.
+
 ## Outputs
 
 ### `content`
@@ -49,6 +52,7 @@ jobs:
         id: result
         with:
           repository: owner/repo ## using another repo
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
       - uses: gr2m/get-json-paths-action@v1.x
         id: files
         with:
