@@ -19,6 +19,6 @@ outputs:
     description: "The string `'true'` if the file `filename` was found, `'false'` otherwise."
 
 runs:
-  using: "node12"
+  using: "node20"
   main: "dist/index.js"
 
